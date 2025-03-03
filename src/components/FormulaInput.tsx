@@ -9,13 +9,15 @@ import { fetchSuggestions, Suggestion } from "@/api/fetchSuggestion";
 const OPERATORS = new Set(["+", "-", "*", "/", "(", ")", "^"]);
 
 const FormulaInput: React.FC = () => {
-    const { formula, setFormula } = useFormulaStore();
-    const [inputValue, setInputValue] = useState<string>("");
-    const [queryValue, setQueryValue] = useState<string>("")
-    const [tokens, setTokens] = useState<(string | Suggestion)[]>([]);
-    const [result, setResult] = useState<number | null>(null);
+    const {
+        inputValue, setInputValue,
+        queryValue, setQueryValue,
+        tokens, setTokens,
+        result, setResult,
+        isDropdownOpen, setIsDropdownOpen
+    } = useFormulaStore();
+ 
     const [activeTokenIndex, setActiveTokenIndex] = useState<number | null>(null);
-    const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
 
     // Fetch autocomplete suggestions
     const { data: suggestions, refetch } = useQuery<Suggestion[]>({
@@ -72,15 +74,14 @@ const FormulaInput: React.FC = () => {
 
         for (const item of arr) {
             if (/^\d+$/.test(item)) {
-                // If it's a number, append to buffer
                 buffer += item;
             } else {
                 // If an operator is encountered, push the buffer if not empty
                 if (buffer) {
-                    result.push(buffer); // Store merged number
-                    buffer = ""; // Reset buffer
+                    result.push(buffer); 
+                    buffer = ""; 
                 }
-                result.push(item); // Store operator
+                result.push(item); 
             }
         }
 
@@ -93,7 +94,6 @@ const FormulaInput: React.FC = () => {
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setInputValue(value);
-        setFormula(value);
     };
 
     const handleEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -115,7 +115,7 @@ const FormulaInput: React.FC = () => {
             if (buffer) newTokens.push(buffer);
             let input = newTokens.join(" ");
 
-            setTokens((prevTokens) => [...prevTokens, input]);
+            setTokens([...tokens, input]);
             setInputValue("");
         };
     }
@@ -150,7 +150,7 @@ const FormulaInput: React.FC = () => {
         let mergedBuffer = mergeNumbers(buffer);
 
         // Update tokens and inputValue before evaluating
-        setTokens((prevTokens) => [...prevTokens, ...mergedBuffer]);
+        setTokens([...tokens, ...mergedBuffer]);
         setInputValue("");
     };
 
@@ -159,7 +159,6 @@ const FormulaInput: React.FC = () => {
     };
 
     const handleTokenSelect = (optionName: string, data: Suggestion) => {
-      
       
         // Replace only tokens that are of type Suggestion
         const updatedTokens = tokens.map(token =>
@@ -217,7 +216,7 @@ const FormulaInput: React.FC = () => {
                 </div>
             </div>
             <div className="flex flex-col gap-2 ">
-                <div>Result</div>
+                <div>Value</div>
                 <div className="flex items-center justify-center flex-wrap gap-1 p-2 border rounded-md bg-white min-h-[55px] min-w-[75px]">{result != null ? result: "Invalid"}</div>
             </div>
 
