@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import useFormulaStore from "@/store/formulaStore";
@@ -15,6 +15,7 @@ const FormulaInput: React.FC = () => {
     const [tokens, setTokens] = useState<(string | Suggestion)[]>([]);
     const [result, setResult] = useState<number | null>(null);
     const [activeTokenIndex, setActiveTokenIndex] = useState<number | null>(null);
+    const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
 
     // Fetch autocomplete suggestions
     const { data: suggestions, refetch } = useQuery<Suggestion[]>({
@@ -25,24 +26,33 @@ const FormulaInput: React.FC = () => {
 
     useEffect(() => {
         if (inputValue.length > 0) {
-            let newQuery = removeLeadingOperators(inputValue)
-            console.log("New Query", newQuery)
-            setQueryValue(newQuery)
-            refetch(); // Manually fetch when input changes
+            let newQuery = removeLeadingOperators(inputValue);
+            setQueryValue(newQuery);
         }
-        console.log("Fetching suggestions...", suggestions, inputValue);
-    }, [inputValue, refetch]);
+    }, [inputValue]);
+    
+    useEffect(() => {
+        if (queryValue.length > 0) {
+            refetch();
+            setIsDropdownOpen(true);
+        } else {
+            setIsDropdownOpen(false);
+        }
+    }, [queryValue, refetch]);
 
     useEffect(() => {
+        console.log("TOKENS",tokens)
         if (tokens.length > 0) {
             try {
                 let expression = tokens
                     .map((token: Suggestion | string) =>
                         typeof token === "string" ? token : token.value
                     )
-                    .join(" ");
-
+                    .join("");
+                
+                console.log("Expression for evaluation",expression)
                 const evaluatedResult = eval(expression);
+                console.log(evaluatedResult)
                 setResult(evaluatedResult);
             } catch (error) {
                 console.error("Invalid Expression", error);
@@ -106,7 +116,6 @@ const FormulaInput: React.FC = () => {
             let input = newTokens.join(" ");
 
             setTokens((prevTokens) => [...prevTokens, input]);
-            console.log("Tokens...", tokens);
             setInputValue("");
         };
     }
@@ -125,9 +134,9 @@ const FormulaInput: React.FC = () => {
             }
         }
         let mergedBuffer = mergeNumbers(buffer);
-        console.log(buffer, "Buffer during selection")
         setTokens([...tokens, ...mergedBuffer, suggestion]);
         setInputValue("");
+        setIsDropdownOpen(false);
     };
 
     const handleEvaluate = () => {
@@ -209,14 +218,14 @@ const FormulaInput: React.FC = () => {
             </div>
             <div className="flex flex-col gap-2 ">
                 <div>Result</div>
-                <div className="flex items-center justify-center flex-wrap gap-1 p-2 border rounded-md bg-white min-h-[55px] min-w-[75px]">{result || "Invalid"}</div>
+                <div className="flex items-center justify-center flex-wrap gap-1 p-2 border rounded-md bg-white min-h-[55px] min-w-[75px]">{result != null ? result: "Invalid"}</div>
             </div>
 
 
 
 
             {/* Show dropdown only if there are valid suggestions */}
-            {suggestions && suggestions.length > 0 && (
+            {isDropdownOpen && suggestions && suggestions.length > 0 && (
                 <ul className="absolute left-0 mt-24 w-full border bg-white shadow-lg rounded-lg">
                     {suggestions.map((suggestion: Suggestion) => (
                         <li

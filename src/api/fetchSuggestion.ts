@@ -9,7 +9,6 @@ export interface Suggestion {
 export const fetchSuggestions = async (query: string): Promise<Suggestion[]> => {
     if (!query) return [];
     try {
-        console.log("Fetching suggestions for query:", query);
         const response = await fetch(`https://652f91320b8d8ddac0b2b62b.mockapi.io/autocomplete?name=${query}`);
         if (!response.ok) throw new Error("Failed to fetch");
 
